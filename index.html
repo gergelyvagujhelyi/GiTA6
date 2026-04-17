@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GiTA6 - Vice City</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌴</text></svg>">
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="loading-content">
+            <h1 class="game-title">GiTA<span class="six">6</span></h1>
+            <p class="subtitle">VICE CITY</p>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loading-bar"></div>
+            </div>
+            <p class="loading-text" id="loading-text">Loading world...</p>
+            <p class="start-hint" id="start-hint" style="display:none">Click to Start</p>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="mobile-controls" style="display:none">
+        <div class="dpad">
+            <button class="dpad-btn up" data-key="w">&#9650;</button>
+            <button class="dpad-btn left" data-key="a">&#9664;</button>
+            <button class="dpad-btn right" data-key="d">&#9654;</button>
+            <button class="dpad-btn down" data-key="s">&#9660;</button>
+        </div>
+        <div class="action-buttons">
+            <button class="action-btn shoot" data-action="shoot">FIRE</button>
+            <button class="action-btn enter" data-action="enter">F</button>
+            <button class="action-btn sprint" data-key="shift">RUN</button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/world.js"></script>
+    <script src="js/entity.js"></script>
+    <script src="js/weapons.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/police.js"></script>
+    <script src="js/missions.js"></script>
+    <script src="js/hud.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
