@@ -278,8 +278,12 @@ class Game {
 
         // Vehicles
         for (const v of this.vehicles) {
-            if (v instanceof TrafficVehicle && !v.occupied) {
+            if (v instanceof TrafficVehicle) {
                 v.update(dt, this.world, this.vehicles, this.player.x, this.player.y);
+                // When occupied, TrafficVehicle.update returns early; run base fire/damage
+                if (v.occupied) {
+                    Vehicle.prototype.update.call(v, dt, this.world);
+                }
             } else {
                 v.update(dt, this.world);
             }
@@ -296,8 +300,9 @@ class Game {
                 this.particles.spawn('smoke', v.x, v.y, 1);
             }
 
-            // Vehicle explosion
-            if (v.health <= 0 && !v.exploded) {
+            // Vehicle explosion — triggered by needsExplosion flag from takeDamage/fire
+            if (v.needsExplosion && !v.exploded) {
+                v.needsExplosion = false;
                 v.explode();
                 this.particles.spawn('explosion', v.x, v.y, 25);
                 this.audio.play('explosion');
@@ -336,6 +341,7 @@ class Game {
 
             // Vehicle collision with pedestrians
             for (const v of this.vehicles) {
+                if (!ped.alive) break; // already dead, stop checking
                 if (v.exploded || !v.alive || Math.abs(v.speed) < 20) continue;
                 if (Utils.circleRectOverlap(ped.x, ped.y, ped.size,
                     v.x - v.width / 2, v.y - v.length / 2, v.width, v.length)) {
@@ -396,8 +402,9 @@ class Game {
             }
         }
 
-        // Weapons/projectiles
-        this.weapons.update(dt, this.world, this.player, this.pedestrians, this.vehicles,
+        // Weapons/projectiles — include police officers so they can be hit
+        const allNpcs = this.pedestrians.concat(this.police.getOfficers());
+        this.weapons.update(dt, this.world, this.player, allNpcs, this.vehicles,
             this.particles, this.audio, this.camera);
 
         // Police

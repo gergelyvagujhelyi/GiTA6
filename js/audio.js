@@ -260,7 +260,7 @@ class AudioSystem {
     }
 
     _playRadioLoop(station) {
-        if (!this.musicPlaying) return;
+        if (!this.musicPlaying || !this.ctx) return;
 
         const now = this.ctx.currentTime;
         const beatLen = 60 / station.bpm;

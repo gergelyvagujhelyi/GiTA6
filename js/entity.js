@@ -68,8 +68,7 @@ class Player extends Entity {
 
     update(dt, input, world, audio) {
         if (!this.alive) {
-            this.respawnTimer -= dt;
-            return;
+            return; // respawn timer handled by game.js
         }
 
         this.enterCooldown = Math.max(0, this.enterCooldown - dt);
@@ -182,15 +181,20 @@ class Player extends Entity {
         const newX = v.x + v.vx * dt;
         const newY = v.y + v.vy * dt;
 
-        // Building collision
+        // Building collision — use rotated bounding box
+        const cos = Math.abs(Math.cos(v.rotation));
+        const sin = Math.abs(Math.sin(v.rotation));
+        const aabbW = stats.width * cos + stats.length * sin;
+        const aabbH = stats.width * sin + stats.length * cos;
         const hitBuilding = world.collidesWithBuilding(
-            newX - stats.width / 2, newY - stats.length / 2,
-            stats.width, stats.length
+            newX - aabbW / 2, newY - aabbH / 2,
+            aabbW, aabbH
         );
 
         if (hitBuilding) {
+            const impactSpeed = Math.abs(v.speed);
             v.speed *= -0.3;
-            v.health -= Math.abs(v.speed) * 0.1;
+            v.health -= impactSpeed * 0.1;
             audio.play('crash', 0.5);
         } else {
             v.x = newX;
@@ -309,6 +313,7 @@ class Player extends Entity {
         this.armor = 0;
         this.wantedLevel = 0;
         this.wantedHeat = 0;
+        this.wantedTimer = 0;
         this.invincibleTimer = 3;
         this.state = 'idle';
         // Respawn at hospital (center-ish)
@@ -345,19 +350,20 @@ class Vehicle extends Entity {
 
     update(dt, world) {
         // If no driver, decelerate
-        if (!this.occupied && Math.abs(this.speed) > 0) {
+        if (!this.occupied && !this.npcControlled && Math.abs(this.speed) > 0) {
             this.speed *= (1 - 3 * dt);
             if (Math.abs(this.speed) < 2) this.speed = 0;
             this.x += Math.cos(this.rotation) * this.speed * dt;
             this.y += Math.sin(this.rotation) * this.speed * dt;
         }
 
-        // Fire damage
+        // Fire damage — always runs even when occupied
         if (this.onFire) {
             this.fireTimer += dt;
             this.health -= 20 * dt;
+            // Set needsExplosion flag so game.js can add particles/sound
             if (this.health <= 0 && !this.exploded) {
-                this.explode();
+                this.needsExplosion = true;
             }
         }
 
@@ -370,22 +376,25 @@ class Vehicle extends Entity {
     }
 
     takeDamage(amount) {
+        if (!this.alive) return;
         this.health -= amount;
         if (this.health <= 0 && !this.exploded) {
-            this.explode();
+            this.needsExplosion = true;
         }
     }
 
     explode() {
+        if (this.exploded) return;
         this.exploded = true;
         this.alive = false;
         this.speed = 0;
         this.onFire = false;
         if (this.driver) {
-            this.driver.takeDamage(80);
+            // Exit vehicle before taking damage to avoid state confusion
             if (this.driver === window._game?.player) {
-                this.driver.exitVehicle(window._game.audio);
+                this.driver.exitVehicle(window._game?.audio);
             }
+            this.driver.takeDamage(80);
         }
     }
 
@@ -501,9 +510,20 @@ class TrafficVehicle extends Vehicle {
 
     update(dt, world, vehicles, playerX, playerY) {
         if (this.exploded || !this.alive) return;
-        if (this.occupied) return; // Player is driving
+        if (this.occupied) return; // Player is driving — game.js calls Vehicle.update
 
-        super.update(dt, world);
+        // Fire/damage logic from parent (without the deceleration/movement)
+        if (this.onFire) {
+            this.fireTimer += dt;
+            this.health -= 20 * dt;
+            if (this.health <= 0 && !this.exploded) {
+                this.needsExplosion = true;
+            }
+        }
+        if (this.health < this.maxHealth * 0.2 && !this.onFire && !this.exploded) {
+            this.onFire = true;
+        }
+        this.damaged = this.health < this.maxHealth * 0.5;
 
         // AI driving
         this.speed = Utils.lerp(this.speed, this.targetSpeed, dt * 2);

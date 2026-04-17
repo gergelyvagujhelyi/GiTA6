@@ -136,6 +136,7 @@ class WeaponSystem {
             }
 
             // Hit NPCs (player projectiles)
+            let removed = false;
             if (p.owner === 'player') {
                 for (const npc of npcs) {
                     if (!npc.alive) continue;
@@ -156,30 +157,34 @@ class WeaponSystem {
 
                         if (!p.melee && !p.explosive) {
                             this.projectiles.splice(i, 1);
+                            removed = true;
                             break;
                         }
                     }
                 }
 
-                // Hit vehicles
-                for (const v of vehicles) {
-                    if (v.exploded || v === player.inVehicle) continue;
-                    if (Utils.circleRectOverlap(p.x, p.y, 4,
-                        v.x - v.width / 2, v.y - v.length / 2, v.width, v.length)) {
-                        v.takeDamage(p.damage);
-                        particles.spawn('spark', p.x, p.y, 3);
-                        player.addWanted(3);
+                // Hit vehicles (skip if projectile already consumed)
+                if (!removed) {
+                    for (const v of vehicles) {
+                        if (v.exploded || v === player.inVehicle) continue;
+                        if (Utils.circleRectOverlap(p.x, p.y, 4,
+                            v.x - v.width / 2, v.y - v.length / 2, v.width, v.length)) {
+                            v.takeDamage(p.damage);
+                            particles.spawn('spark', p.x, p.y, 3);
+                            player.addWanted(3);
 
-                        if (!p.melee && !p.explosive) {
-                            this.projectiles.splice(i, 1);
-                            break;
+                            if (!p.melee && !p.explosive) {
+                                this.projectiles.splice(i, 1);
+                                removed = true;
+                                break;
+                            }
                         }
                     }
                 }
             }
 
             // Hit player (NPC projectiles)
-            if (p.owner === 'npc') {
+            if (!removed && p.owner === 'npc') {
                 if (player.inVehicle) {
                     const v = player.inVehicle;
                     if (Utils.circleRectOverlap(p.x, p.y, 4,

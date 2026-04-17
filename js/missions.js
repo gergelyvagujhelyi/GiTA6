@@ -226,8 +226,21 @@ class MissionSystem {
 
     update(dt, player, world, audio) {
         if (!this.currentMission) return;
+
+        // Handle fail/complete display before checking alive
+        if (this.showingFail) {
+            this.failTimer -= dt;
+            if (this.failTimer <= 0) {
+                this.showingFail = false;
+                this.currentMission = null;
+            }
+            return;
+        }
+
         if (!player.alive) {
-            this.failMission('WASTED', audio);
+            if (!this.showingFail) {
+                this.failMission('WASTED', audio);
+            }
             return;
         }
 
@@ -256,15 +269,7 @@ class MissionSystem {
             return;
         }
 
-        // Fail display
-        if (this.showingFail) {
-            this.failTimer -= dt;
-            if (this.failTimer <= 0) {
-                this.showingFail = false;
-                this.currentMission = null;
-            }
-            return;
-        }
+        // Fail display — handled at top of update()
 
         const step = this.currentMission.steps[this.currentStep];
         if (!step) return;
@@ -359,7 +364,9 @@ class MissionSystem {
     }
 
     failMission(reason, audio) {
+        if (this.showingFail) return; // prevent re-entry spam
         this.showingFail = true;
+        this.showingBriefing = false; // prevent briefing from blocking fail display
         this.failTimer = 3;
         this.failReason = reason;
         this.missionMarkers = [];

@@ -605,22 +605,33 @@ class Renderer {
         ctx.fillRect(-hw + 2, hl - 3, 4, 3);
         ctx.fillRect(hw - 6, hl - 3, 4, 3);
 
-        // Damage
+        // Damage (deterministic scratch positions based on vehicle identity)
         if (vehicle.damaged) {
+            if (!vehicle._scratchCache) {
+                const s = Utils.seededRandom(vehicle.x * 7 + vehicle.y * 13 + vehicle.health);
+                vehicle._scratchCache = [];
+                for (let i = 0; i < 3; i++) {
+                    vehicle._scratchCache.push({
+                        x1: s() * hw * 2 - hw, y1: s() * hl * 2 - hl,
+                        x2: s() * hw * 2 - hw, y2: s() * hl * 2 - hl
+                    });
+                }
+            }
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 1;
-            for (let i = 0; i < 3; i++) {
+            for (const sc of vehicle._scratchCache) {
                 ctx.beginPath();
-                ctx.moveTo(Utils.rand(-hw, hw), Utils.rand(-hl, hl));
-                ctx.lineTo(Utils.rand(-hw, hw), Utils.rand(-hl, hl));
+                ctx.moveTo(sc.x1, sc.y1);
+                ctx.lineTo(sc.x2, sc.y2);
                 ctx.stroke();
             }
         }
 
-        // Fire
+        // Fire (varied colors per blob)
         if (vehicle.onFire) {
-            ctx.fillStyle = Utils.randChoice(['#e74c3c', '#f39c12', '#f1c40f']);
+            const fireColors = ['#e74c3c', '#f39c12', '#f1c40f'];
             for (let i = 0; i < 5; i++) {
+                ctx.fillStyle = fireColors[i % 3];
                 const fx = Utils.rand(-hw, hw);
                 const fy = Utils.rand(-hl, hl);
                 ctx.beginPath();
