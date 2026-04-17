@@ -182,10 +182,11 @@ class Player extends Entity {
         const newY = v.y + v.vy * dt;
 
         // Building collision — use rotated bounding box
+        // length is along movement direction (cos/sin), width is perpendicular
         const cos = Math.abs(Math.cos(v.rotation));
         const sin = Math.abs(Math.sin(v.rotation));
-        const aabbW = stats.width * cos + stats.length * sin;
-        const aabbH = stats.width * sin + stats.length * cos;
+        const aabbW = stats.length * cos + stats.width * sin;
+        const aabbH = stats.length * sin + stats.width * cos;
         const hitBuilding = world.collidesWithBuilding(
             newX - aabbW / 2, newY - aabbH / 2,
             aabbW, aabbH
@@ -401,7 +402,7 @@ class Vehicle extends Entity {
     getCorners() {
         return Utils.getOBBCorners({
             x: this.x, y: this.y,
-            width: this.width, height: this.length,
+            width: this.length, height: this.width,
             rotation: this.rotation
         });
     }

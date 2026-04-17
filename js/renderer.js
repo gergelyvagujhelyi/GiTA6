@@ -573,7 +573,7 @@ class Renderer {
     _drawVehicle(ctx, vehicle, gameTime) {
         ctx.save();
         ctx.translate(vehicle.x, vehicle.y);
-        ctx.rotate(vehicle.rotation);
+        ctx.rotate(vehicle.rotation - Math.PI / 2);
 
         const hw = vehicle.width / 2;
         const hl = vehicle.length / 2;
@@ -678,7 +678,7 @@ class Renderer {
     _drawExplodedVehicle(ctx, vehicle) {
         ctx.save();
         ctx.translate(vehicle.x, vehicle.y);
-        ctx.rotate(vehicle.rotation);
+        ctx.rotate(vehicle.rotation - Math.PI / 2);
 
         const hw = vehicle.width / 2;
         const hl = vehicle.length / 2;
